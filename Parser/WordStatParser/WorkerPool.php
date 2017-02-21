@@ -1,4 +1,5 @@
 <?php
+
 namespace Seo\AppBundle\Parser\WordStatParser;
 
 use Seo\AppBundle\Parser\AbstractWorkerPool;
@@ -18,11 +19,10 @@ final class WorkerPool extends AbstractWorkerPool
         $this->apiKey       = $apiKey;
 
         foreach ($proxyList as $proxyName) {
-
             try {
                 $userAgent = $this->getRandomUserAgent();
                 $cookieJar = $this->getCookieJar($proxyName, $userAgent);
-                $worker = new Worker($cookieJar, $proxyName, $userAgent);
+                $worker    = new Worker($cookieJar, $proxyName, $userAgent);
 
                 $this->addWorkerToStorage($proxyName, $worker);
             } catch (NoMoreAccounts $e) {
@@ -31,14 +31,14 @@ final class WorkerPool extends AbstractWorkerPool
                 $output->writeln($e->getMessage());
                 continue;
             }
-
         }
     }
 
     /**
-     * Удаление ворекера
+     * Удаление ворекера.
      *
      * @param $proxyName
+     *
      * @return $this
      */
     public function removeWorker($proxyName)
@@ -48,13 +48,16 @@ final class WorkerPool extends AbstractWorkerPool
         $worker->getCookieJar()->clear();
 
         parent::removeWorker($proxyName);
+
         return $this;
     }
 
     /**
      * @param $proxy
      * @param $userAgent
+     *
      * @return \GuzzleHttp\Cookie\FileCookieJar
+     *
      * @throws BadProxy
      * @throws NoMoreAccounts
      */
@@ -64,7 +67,7 @@ final class WorkerPool extends AbstractWorkerPool
 
         $cookieBuilder = new CookieBuilder($proxy, $userAgent, $account['login'], $account['pwd'], $this->tmpDir, $this->output);
         $cookieBuilder->setCaptchaApiKey($this->apiKey);
-        
+
         $constructed = false;
         while ($constructed == false) {
             try {
@@ -81,9 +84,10 @@ final class WorkerPool extends AbstractWorkerPool
     }
 
     /**
-     * Получение не использованного аккаунта
+     * Получение не использованного аккаунта.
      *
      * @return array
+     *
      * @throws NoMoreAccounts
      */
     private function getUnusedAccount()
@@ -92,9 +96,9 @@ final class WorkerPool extends AbstractWorkerPool
             $key = array_rand($this->accountsList);
 
             $exploded = explode(':', trim($this->accountsList[$key]));
-            $result = [
+            $result   = [
                 'login' => $exploded[0],
-                'pwd' => $exploded[1],
+                'pwd'   => $exploded[1],
             ];
 
             // Убираем аккаунт из массива дабы он нам больше не попадался

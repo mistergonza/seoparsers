@@ -1,11 +1,11 @@
 <?php
+
 namespace Seo\AppBundle\Parser\WordStatParser;
 
 use Seo\AppBundle\Parser\AbstractCookieBuilder;
 use Seo\AppBundle\Parser\CaptchaDecodeTrait;
 use Seo\AppBundle\Parser\WordStatParser\CookieBuilderException\BadProxy as BadProxyException;
 use Seo\AppBundle\Parser\WordStatParser\CookieBuilderException\BadAccount as BadAccountException;
-
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Cookie as GuzzleCookie;
 use Symfony\Component\DomCrawler\Crawler;
@@ -13,7 +13,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Подготавливает куки для дальнейшего использования в парсере
- * Class CookieBuilder
+ * Class CookieBuilder.
  */
 final class CookieBuilder extends AbstractCookieBuilder
 {
@@ -30,15 +30,16 @@ final class CookieBuilder extends AbstractCookieBuilder
 
         parent::__construct($userAgent, $cookieFileName, $proxy, $output);
 
-        $this->httpClient       = new GuzzleClient();
-        $this->yandexLogin      = $login;
-        $this->yandexPassword   = $password;
-        $this->tmpDir           = $tmpDir;
-        $this->cookieJar = new GuzzleCookie\FileCookieJar($cookieFileName);
+        $this->httpClient     = new GuzzleClient();
+        $this->yandexLogin    = $login;
+        $this->yandexPassword = $password;
+        $this->tmpDir         = $tmpDir;
+        $this->cookieJar      = new GuzzleCookie\FileCookieJar($cookieFileName);
     }
 
     /**
      * @return $this
+     *
      * @throws BadAccountException
      * @throws BadProxyException
      */
@@ -79,7 +80,8 @@ final class CookieBuilder extends AbstractCookieBuilder
     }
 
     /**
-     * Получение первоначальных печенек от Яндекса
+     * Получение первоначальных печенек от Яндекса.
+     *
      * @return $this
      */
     private function getYandexCookies()
@@ -91,28 +93,28 @@ final class CookieBuilder extends AbstractCookieBuilder
             $options = [
                 'cookies' => $this->cookieJar,
                 'headers' => [
-                    'User-Agent' => $this->userAgent
+                    'User-Agent' => $this->userAgent,
                 ],
                 'proxy' => 'tcp://' . $this->proxy,
             ];
 
             $response = $client->request('GET', 'https://wordstat.yandex.ru', $options);
             $response = $client->request('GET', 'https://kiks.yandex.ru/su/', $options);
-
         }
 
         return $this;
     }
 
     /**
-     * Авторизация на Яндексе
+     * Авторизация на Яндексе.
+     *
      * @return $this
+     *
      * @throws BadAccountException
      */
     private function yandexAuth()
     {
         if (!$this->cookieAnalyze('yandex_login')) {
-
             $this->output->writeln("{$this->proxy}: Авторизация на Яндексе");
 
             $client = $this->httpClient;
@@ -120,13 +122,13 @@ final class CookieBuilder extends AbstractCookieBuilder
             $options = [
                 'cookies' => $this->cookieJar,
                 'headers' => [
-                    'User-Agent' => $this->userAgent
+                    'User-Agent' => $this->userAgent,
                 ],
-                'proxy' => 'tcp://' . $this->proxy,
+                'proxy'       => 'tcp://' . $this->proxy,
                 'form_params' => [
-                    'login' => $this->yandexLogin,
+                    'login'  => $this->yandexLogin,
                     'passwd' => $this->yandexPassword,
-                ]
+                ],
             ];
 
             $response = $client->request(
@@ -144,15 +146,15 @@ final class CookieBuilder extends AbstractCookieBuilder
                 $captchaUrl = $domCrawler->filter('img.captcha__captcha__text')->first()->attr('src');
                 $captchaKey = $domCrawler->filter('input.captcha_key')->first()->attr('value');
 
-                $captchaFile = $this->saveCaptchaFile($captchaUrl, 'ws');
+                $captchaFile      = $this->saveCaptchaFile($captchaUrl, 'ws');
                 $recognizedResult = $this->recognizeCaptcha($captchaFile);
 
                 if ($recognizedResult) {
                     $this->output->writeln("{$this->proxy}: капча распознана");
-                    $captchaOptions = $options;
-                    $captchaOptions['form_data']['answer']  = $recognizedResult;
-                    $captchaOptions['form_data']['key']     = $captchaKey;
-                    $response = $client->request(
+                    $captchaOptions                        = $options;
+                    $captchaOptions['form_data']['answer'] = $recognizedResult;
+                    $captchaOptions['form_data']['key']    = $captchaKey;
+                    $response                              = $client->request(
                         'POST',
                         'https://passport.yandex.ru/passport?mode=auth&from=&retpath=https%3A%2F%2Fwordstat.yandex.ru%2F&twoweeks=yes',
                         $captchaOptions
@@ -160,7 +162,7 @@ final class CookieBuilder extends AbstractCookieBuilder
 
                     $body = $response->getBody()->getContents();
                 } else {
-                    throw new BadAccountException('Капча не распознана: ' . $captchaUrl );
+                    throw new BadAccountException('Капча не распознана: ' . $captchaUrl);
                 }
             }
 
@@ -170,7 +172,6 @@ final class CookieBuilder extends AbstractCookieBuilder
             } else {
                 throw new BadAccountException("{$this->proxy}: Авторизация не пройдена ({$this->yandexLogin}:{$this->yandexPassword})");
             }
-
         } else {
             $this->output->writeln("{$this->proxy}: Авторизация на Яндексе не требуется");
         }

@@ -1,4 +1,5 @@
 <?php
+
 namespace Seo\AppBundle\Parser\WordStatParser\CookieBuilderException;
 
 class BadAccount extends \Exception

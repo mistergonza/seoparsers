@@ -1,11 +1,13 @@
 <?php
+
 namespace Seo\AppBundle\Parser\WordStatParser;
 
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Cookie as GuzzleCookie;
 use Seo\AppBundle\Parser\WorkerInterface;
 
-final class Worker implements WorkerInterface {
+final class Worker implements WorkerInterface
+{
     private $httpClient;
     private $cookieJar;
     private $proxy;
@@ -13,18 +15,19 @@ final class Worker implements WorkerInterface {
 
     public function __construct(GuzzleCookie\CookieJarInterface $jar, $proxy, $userAgent)
     {
-        $this->httpClient   = new GuzzleClient();
-        $this->cookieJar    = $jar;
-        $this->proxy        = $proxy;
-        $this->userAgent    = $userAgent;
+        $this->httpClient = new GuzzleClient();
+        $this->cookieJar  = $jar;
+        $this->proxy      = $proxy;
+        $this->userAgent  = $userAgent;
     }
 
     /**
      * @param $phrase
      * @param array $regions
-     * @param int $page
-     * @param null $captchaKey
-     * @param null $captchaValue
+     * @param int   $page
+     * @param null  $captchaKey
+     * @param null  $captchaValue
+     *
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
     public function parsePhrase($phrase, $regions = [], $page = 1, $captchaKey = null, $captchaValue = null)
@@ -37,22 +40,22 @@ final class Worker implements WorkerInterface {
 
         $options = [
             'cookies' => $this->cookieJar,
-            'proxy' => 'tcp://' . $this->proxy,
+            'proxy'   => 'tcp://' . $this->proxy,
             'headers' => [
-                'User-Agent' => $this->userAgent
+                'User-Agent' => $this->userAgent,
             ],
             'form_params' => [
-                'db' => null,
-                'filter' => 'all',
-                'map' => 'world',
-                'page' => $page,
+                'db'        => null,
+                'filter'    => 'all',
+                'map'       => 'world',
+                'page'      => $page,
                 'page_type' => 'words',
-                'period' => 'monthly',
-                'regions' => $regionsParam,
-                'sort' => 'cnt',
-                'type' => 'list',
-                'words' => $phrase,
-            ]
+                'period'    => 'monthly',
+                'regions'   => $regionsParam,
+                'sort'      => 'cnt',
+                'type'      => 'list',
+                'words'     => $phrase,
+            ],
         ];
 
         if ($captchaKey && $captchaValue) {

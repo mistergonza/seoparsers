@@ -1,4 +1,5 @@
 <?php
+
 namespace Seo\AppBundle\Parser\YandexSearchParser;
 
 use Seo\AppBundle\Parser\AbstractCookieBuilder;
@@ -17,9 +18,9 @@ final class CookieBuilder extends AbstractCookieBuilder
 
         parent::__construct($userAgent, $cookieFileName, $proxy, $output);
 
-        $this->httpClient   = new GuzzleClient();
-        $this->tmpDir       = $tmpDir;
-        $this->cookieJar    = new GuzzleCookie\FileCookieJar($cookieFileName);
+        $this->httpClient = new GuzzleClient();
+        $this->tmpDir     = $tmpDir;
+        $this->cookieJar  = new GuzzleCookie\FileCookieJar($cookieFileName);
     }
 
     public function constructJar()
@@ -33,7 +34,8 @@ final class CookieBuilder extends AbstractCookieBuilder
     }
 
     /**
-     * Получение первоначальных печенек от Яндекса
+     * Получение первоначальных печенек от Яндекса.
+     *
      * @return $this
      */
     private function getYandexPageCookies()
@@ -45,13 +47,14 @@ final class CookieBuilder extends AbstractCookieBuilder
             $options = [
                 'cookies' => $this->cookieJar,
                 'headers' => [
-                    'User-Agent' => $this->userAgent
+                    'User-Agent' => $this->userAgent,
                 ],
                 'proxy' => 'tcp://' . $this->proxy,
             ];
 
             $response = $client->request('GET', 'https://yandex.ru/', $options);
         }
+
         return $this;
     }
 
@@ -63,7 +66,7 @@ final class CookieBuilder extends AbstractCookieBuilder
         $options = [
             'cookies' => $this->cookieJar,
             'headers' => [
-                'User-Agent' => $this->userAgent
+                'User-Agent' => $this->userAgent,
             ],
             'proxy' => 'tcp://' . $this->proxy,
         ];
@@ -75,7 +78,6 @@ final class CookieBuilder extends AbstractCookieBuilder
 
     private function getYandexKiksCookies()
     {
-
         if (!$this->cookieAnalyze('fuid01')) {
             $this->output->writeln($this->proxy . ': Получение печенек от Яндекса (kiks)');
             $client = $this->httpClient;
@@ -83,13 +85,14 @@ final class CookieBuilder extends AbstractCookieBuilder
             $options = [
                 'cookies' => $this->cookieJar,
                 'headers' => [
-                    'User-Agent' => $this->userAgent
+                    'User-Agent' => $this->userAgent,
                 ],
                 'proxy' => 'tcp://' . $this->proxy,
             ];
 
             $response = $client->request('GET', 'http://kiks.yandex.ru/su/', $options);
         }
+
         return $this;
     }
 }

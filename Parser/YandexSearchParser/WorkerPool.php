@@ -1,10 +1,11 @@
 <?php
+
 namespace Seo\AppBundle\Parser\YandexSearchParser;
 
 use Seo\AppBundle\Parser\AbstractWorkerPool;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class WorkerPool extends AbstractWorkerPool
+final class WorkerPool extends AbstractWorkerPool
 {
     public function __construct(array $proxyList, array $userAgents, $tmpDir, OutputInterface $output)
     {
@@ -13,20 +14,20 @@ class WorkerPool extends AbstractWorkerPool
             try {
                 $userAgent = $this->getOrderedUserAgent();
                 $cookieJar = $this->getCookieJar($proxyName, $userAgent);
-                $worker = new Worker($cookieJar, $proxyName, $userAgent);
+                $worker    = new Worker($cookieJar, $proxyName, $userAgent);
 
                 $this->addWorkerToStorage($proxyName, $worker);
             } catch (\Exception $e) {
-
             }
         }
     }
 
     /**
-     * Возвращает подготвленную куку
+     * Возвращает подготвленную куку.
      *
      * @param $proxy
      * @param $userAgent
+     *
      * @return \GuzzleHttp\Cookie\FileCookieJar
      */
     private function getCookieJar($proxy, $userAgent)
@@ -38,7 +39,7 @@ class WorkerPool extends AbstractWorkerPool
     }
 
     /**
-     * Возвращает UserAgent последовательно
+     * Возвращает UserAgent последовательно.
      *
      * @return mixed
      */
@@ -46,6 +47,7 @@ class WorkerPool extends AbstractWorkerPool
     {
         $result = array_pop($this->userAgents);
         array_unshift($this->userAgents, $result);
+
         return $result;
     }
 }

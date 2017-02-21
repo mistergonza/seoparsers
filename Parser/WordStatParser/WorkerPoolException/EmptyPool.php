@@ -1,4 +1,5 @@
 <?php
+
 namespace Seo\AppBundle\Parser\WordStatParser\WorkerPoolException;
 
 class EmptyPool extends \Exception

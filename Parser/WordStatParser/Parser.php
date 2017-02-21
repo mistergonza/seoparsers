@@ -1,19 +1,19 @@
 <?php
+
 namespace Seo\AppBundle\Parser\WordStatParser;
 
 use Seo\AppBundle\Parser\AbstractNextGenerationParser;
 use Seo\AppBundle\Parser\WordStatParser\WorkerPoolException\EmptyPool as EmptyPoolException;
 use Seo\AppBundle\Parser\CaptchaDecodeTrait;
 use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Cookie as GuzzleCookie;
 use GuzzleHttp\Promise as GuzzlePromise;
 use Symfony\Component\Console\Output\OutputInterface;
 
 final class Parser extends AbstractNextGenerationParser
 {
-    const STANDARD_PHRASE_TYPE  = 'standard';
-    const QUOTED_PHRASE_TYPE    = 'quoted';
-    const STRONG_PHRASE_TYPE    = 'strong';
+    const STANDARD_PHRASE_TYPE = 'standard';
+    const QUOTED_PHRASE_TYPE   = 'quoted';
+    const STRONG_PHRASE_TYPE   = 'strong';
 
     use CaptchaDecodeTrait;
 
@@ -22,7 +22,7 @@ final class Parser extends AbstractNextGenerationParser
         parent::__construct($workerPool, $tmpDir, $output);
     }
 
-    public function parse($phrases, $regions = [], $type = self::STANDARD_PHRASE_TYPE, $tails = 0 )
+    public function parse($phrases, $regions = [], $type = self::STANDARD_PHRASE_TYPE, $tails = 0)
     {
         $results = [];
 
@@ -36,15 +36,15 @@ final class Parser extends AbstractNextGenerationParser
                     $this->output->writeln("Free workers: {$freeWorkers}");
 
                     // Собираем пачку фраз по количеству свободных воркеров
-                    for ($i = 1; $i <= $freeWorkers; $i++) {
+                    for ($i = 1; $i <= $freeWorkers; ++$i) {
                         if (!empty($phrases)) {
                             $phrasesPack[] = array_pop($phrases);
                         }
                     }
 
                     $executedResults = $this->execute($phrasesPack, $regions, $type, $tails);
-                    $results = array_merge($results, $executedResults['complete']);
-                    $phrases = array_merge($phrases, $executedResults['missed']);
+                    $results         = array_merge($results, $executedResults['complete']);
+                    $phrases         = array_merge($phrases, $executedResults['missed']);
                 } else {
                     throw new EmptyPoolException(' Parser::parse() not found free workers');
                 }
@@ -61,12 +61,11 @@ final class Parser extends AbstractNextGenerationParser
         $workers = [];
         $results = [
             'complete' => [],
-            'missed' => [],
+            'missed'   => [],
         ];
         $tempParseResults = [];
 
         foreach ($phrasesPack as $phrase) {
-            
             $worker = $this->workerPool->getWorker();
 
             // Получаем необходимое колчество воркеров
@@ -74,11 +73,11 @@ final class Parser extends AbstractNextGenerationParser
 
             // Подготавливаем результирующий массив
             $tempParseResults[$worker->getId()] = [
-                'phrase' => $phrase,
+                'phrase'   => $phrase,
                 'lastPage' => 0,
-                'shows' => 0,
-                'tails' => [],
-                'complete' => false
+                'shows'    => 0,
+                'tails'    => [],
+                'complete' => false,
             ];
             $worker = null;
         }
@@ -90,8 +89,7 @@ final class Parser extends AbstractNextGenerationParser
         // Подготовка запросов первой страницы wordstat
         foreach ($workers as $workerId => $worker) {
             /** @var Worker $worker */
-
-            $phrase = $tempParseResults[$worker->getId()]['phrase'];
+            $phrase          = $tempParseResults[$worker->getId()]['phrase'];
             $requestedPhrase = $this->getPhraseToRequestByType($phrase, $type);
 
             $promises[$workerId] = $worker->parsePhrase($requestedPhrase, $regions);
@@ -118,7 +116,7 @@ final class Parser extends AbstractNextGenerationParser
                     $response = $result['value'];
 
                     $responseContent = $response->getBody()->getContents();
-                    $responseData = json_decode($responseContent, true);
+                    $responseData    = json_decode($responseContent, true);
 
                     $phrase = $tempParseResults[$workerId]['phrase'];
                     // Фраза обработанная в соответствии типу
@@ -138,16 +136,15 @@ final class Parser extends AbstractNextGenerationParser
                             );
                         }
 
-                        $page = $this->getCurrentPage($decodedWsData);
+                        $page                                    = $this->getCurrentPage($decodedWsData);
                         $tempParseResults[$workerId]['lastPage'] = $page;
 
                         if ($this->hasNextPage($decodedWsData) && $tails > 0 && $page <= $tails) {
                             // Если нужно парсить следующию страницу
-                            $nextPage           = $page + 1;
+                            $nextPage = $page + 1;
 
                             $promises[$workerId] = $worker->parsePhrase($requestedPhrase, $regions, $nextPage);
                             $this->output->writeln($workerId . ": #{$requestedPhrase}# have next page {$nextPage}");
-
                         } else {
                             $this->output->writeln("{$workerId}: complete #{$requestedPhrase}#");
                             $tempParseResults[$workerId]['complete'] = true;
@@ -157,8 +154,8 @@ final class Parser extends AbstractNextGenerationParser
                     } elseif (isset($responseData['captcha'])) {
                         $this->output->writeln("$workerId: captcha #{$requestedPhrase}#");
 
-                        $captchaKey = $responseData['captcha']['key'];
-                        $captchaUrl = 'https:' . $responseData['captcha']['url'];
+                        $captchaKey  = $responseData['captcha']['key'];
+                        $captchaUrl  = 'https:' . $responseData['captcha']['url'];
                         $captchaFile = $this->saveCaptchaFile($captchaUrl, 'ws');
 
                         $recognizedResult = $this->recognizeCaptcha($captchaFile);
@@ -176,7 +173,6 @@ final class Parser extends AbstractNextGenerationParser
                             $this->workerPool->unchainWorker($workerId);
                             unset($workers[$workerId]);
                         }
-
                     } elseif (isset($responseData['blocked'])) {
                         // Если прокси или аккаунт заблокирован яндексом
                         $this->output->writeln("$workerId: blocked");
@@ -195,7 +191,7 @@ final class Parser extends AbstractNextGenerationParser
                 }
 
                 // Засыпаем перед следующим проходом цикла
-                sleep(rand(45,90));
+                sleep(rand(45, 90));
             }
         }
 
@@ -223,9 +219,10 @@ final class Parser extends AbstractNextGenerationParser
      *
      * @param $phrase
      * @param $type
+     *
      * @return string
      */
-    private function getPhraseToRequestByType($phrase, $type) 
+    private function getPhraseToRequestByType($phrase, $type)
     {
         switch ($type) {
             case self::QUOTED_PHRASE_TYPE:
@@ -244,9 +241,10 @@ final class Parser extends AbstractNextGenerationParser
     }
 
     /**
-     * Получение количества показов
+     * Получение количества показов.
      *
      * @param $decodedWsData
+     *
      * @return int
      */
     private function getShows($decodedWsData)
@@ -255,6 +253,7 @@ final class Parser extends AbstractNextGenerationParser
             $result = $decodedWsData['content']['includingPhrases']['info'][2];
             $result = preg_replace('/\s/', '', $result);
             $result = preg_replace('/[^\d]/', '', $result);
+
             return intval($result);
         } else {
             return 0;
@@ -262,9 +261,10 @@ final class Parser extends AbstractNextGenerationParser
     }
 
     /**
-     * Получение хвостовов
+     * Получение хвостовов.
      *
      * @param $decodedWsData
+     *
      * @return array
      */
     private function getTails($decodedWsData)
@@ -274,13 +274,13 @@ final class Parser extends AbstractNextGenerationParser
         $result = [];
 
         foreach ($items as $item) {
-            $phrase = $item['phrase'];
-            $shows = $item['number'];
-            $shows = preg_replace('/\s/', '', $shows);
-            $shows = preg_replace('/[^\d]/', '', $shows);
+            $phrase   = $item['phrase'];
+            $shows    = $item['number'];
+            $shows    = preg_replace('/\s/', '', $shows);
+            $shows    = preg_replace('/[^\d]/', '', $shows);
             $result[] = [
                 'phrase' => $phrase,
-                'shows' => intval($shows)
+                'shows'  => intval($shows),
             ];
         }
 
@@ -288,9 +288,10 @@ final class Parser extends AbstractNextGenerationParser
     }
 
     /**
-     * Получаем номер текущей страницы
+     * Получаем номер текущей страницы.
      *
      * @param $decodedWsData
+     *
      * @return int
      */
     private function getCurrentPage($decodedWsData)
@@ -301,9 +302,10 @@ final class Parser extends AbstractNextGenerationParser
     }
 
     /**
-     * Проверка на наличие следующей страницы
+     * Проверка на наличие следующей страницы.
      *
      * @param $decodedWsData
+     *
      * @return bool
      */
     private function hasNextPage($decodedWsData)
@@ -312,22 +314,24 @@ final class Parser extends AbstractNextGenerationParser
         if ($textNode === 'yes') {
             return true;
         }
+
         return false;
     }
 
     /**
-     * Разбирает закодированные данные от wordstat
+     * Разбирает закодированные данные от wordstat.
      *
-     * @param array $responseData
+     * @param array  $responseData
      * @param Worker $worker
+     *
      * @return mixed
      */
     private function decodeWs($responseData, Worker $worker)
     {
         $wsDecodeClient = new GuzzleClient();
-        $code = base64_encode($responseData['key']);
+        $code           = base64_encode($responseData['key']);
         $decodeResponse = $wsDecodeClient->request('GET', 'http://localhost:8810/?code=' . $code, []);
-        $decodedKey = $decodeResponse->getBody()->getContents();
+        $decodedKey     = $decodeResponse->getBody()->getContents();
 
         $userAgent = $worker->getUserAgent();
 
@@ -340,10 +344,10 @@ final class Parser extends AbstractNextGenerationParser
             }
         }
 
-        $hash = substr($userAgent, 0, 25) . $cookieFuid . $decodedKey;
+        $hash        = substr($userAgent, 0, 25) . $cookieFuid . $decodedKey;
         $decodedData = '';
-        $dataLen = strlen($responseData['data']);
-        for ($g = 0; $g < $dataLen; $g++) {
+        $dataLen     = strlen($responseData['data']);
+        for ($g = 0; $g < $dataLen; ++$g) {
             $decodedData .= chr(
                 ord($responseData['data'][$g]) ^ ord($hash[$g % strlen($hash)])
             );

@@ -1,8 +1,9 @@
 <?php
+
 namespace Seo\AppBundle\Parser;
 
-interface CookieBuilderInterface {
-    
+interface CookieBuilderInterface
+{
     public function constructJar();
 
     public function getCookieJar();
